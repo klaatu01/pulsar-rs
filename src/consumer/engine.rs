@@ -594,7 +594,9 @@ impl<Exe: Executor> ConsumerEngine<Exe> {
         let start = Instant::now();
         let operation_retry_options = self.client.operation_retry_options.clone();
 
-        match self
+        log::info!("subscribing to topic {}", topic);
+
+        let response =  self
             .connection
             .sender()
             .subscribe(
@@ -606,7 +608,13 @@ impl<Exe: Executor> ConsumerEngine<Exe> {
                 self.name.clone(),
                 self.options.clone(),
             )
-            .await
+            .await;
+
+        if let Err(ref e) = response {
+            log::error!("{}", e)
+        }
+
+        match response
         {
             Ok(_success) => {
                 if *current_retries > 0 {
@@ -731,11 +739,20 @@ impl<Exe: Executor> ConsumerEngine<Exe> {
                 .await
             {
                 // Reconnection went well
-                Ok(()) => break,
+                Ok(()) => { 
+                    log::info!("Reconnection went well");
+                    break
+                },
                 // An retryable error occurs
-                Err(Ok(())) => continue,
+                Err(Ok(())) => { 
+                    log::warn!("Trying reconnection again");
+                    continue 
+                },
                 // An non-retryable error happens, the connection must die !
-                Err(Err(e)) => return Err(e),
+                Err(Err(e)) => { 
+                    log::error!("Error reconnecting");
+                    return Err(e) 
+                },
             }
         }
 
