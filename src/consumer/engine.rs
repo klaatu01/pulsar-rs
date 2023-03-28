@@ -192,6 +192,7 @@ impl<Exe: Executor> ConsumerEngine<Exe> {
         match message_opt {
             None => {
                 error!("Consumer: messages::next: returning Disconnected");
+                let _ = self.tx.send(Err(Error::Consumer(ConsumerError::Connection(ConnectionError::Disconnected)))).await;
                 if let Err(err) = self.reconnect().await {
                     Some(Err(err))
                 } else {
