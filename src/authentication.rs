@@ -83,7 +83,7 @@ pub mod oauth2 {
         issuer_url: Option<String>,
     }
 
-    #[derive(Deserialize, Debug)]
+    #[derive(Deserialize, Clone, Debug)]
     pub struct OAuth2Params {
         pub issuer_url: String,
         pub credentials_url: String,
